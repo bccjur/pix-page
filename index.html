@@ -53,32 +53,37 @@
   </div>
 
   <script>
+    // Gerar o pagamento Pix
     document.getElementById('generate').addEventListener('click', async () => {
       const description = encodeURIComponent(document.getElementById('description').value);
       const code = encodeURIComponent(document.getElementById('code').value);
       const apiUrl = `https://pix-proxy.bccjur.workers.dev/?value=100&description=${description}&code=${code}`;
 
-      // Limpa visual antes de gerar
+      // Limpa antes de gerar
       document.getElementById('pix-code').innerText = 'Gerando...';
       document.getElementById('qr-img').src = '';
 
       try {
         const res = await fetch(apiUrl);
-        if (!res.ok) throw 'Status ' + res.status;
+        if (!res.ok) throw `Status ${res.status}`;
         const json = await res.json();
 
-        const pix = json.pix; // Pega o objeto dentro de 'pix'
-        const pixCode = pix?.qrCopyPaste || "Erro ao obter código Pix";
-        const qrUrl = pix?.qrImageUrl || "";
+        // Validando se a resposta contém os dados necessários
+        const pix = json.pix || {};
+        const pixCode = pix.qrCopyPaste || "Erro ao obter código Pix";
+        const qrUrl = pix.qrImageUrl || "";
 
+        // Atualizando a UI com os dados corretos
         document.getElementById('pix-code').innerText = pixCode;
         document.getElementById('qr-img').src = qrUrl;
       } catch (error) {
         console.error('Erro:', error);
         document.getElementById('pix-code').innerText = 'Erro ao gerar';
+        document.getElementById('qr-img').src = '';
       }
     });
 
+    // Função de copiar o código Pix
     document.getElementById('copy-btn').addEventListener('click', () => {
       const text = document.getElementById('pix-code').innerText;
       if (text && text !== "---" && !text.startsWith("http")) {
