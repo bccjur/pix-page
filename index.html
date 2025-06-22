@@ -1,0 +1,57 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gerador de Pagamento PIX</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
+    input, button { padding: 10px; margin: 10px; width: 300px; font-size: 16px; }
+    .output { margin: 20px auto; width: 80%; word-wrap: break-word; }
+    #qrcode { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Gerador de Pagamento PIX</h1>
+  <input type="number" id="value" placeholder="Valor em Reais" value="100" />
+  <input type="text" id="description" placeholder="Descrição" value="teste" />
+  <input type="text" id="code" placeholder="Código da Conta" value="U8LJWVPV6HHBDNFU" />
+  <button onclick="gerarPix()">Gerar Pix</button>
+
+  <h2>Código Copia e Cola</h2>
+  <div id="copiacola" class="output">---</div>
+  <button onclick="copiar()">Copiar código</button>
+
+  <h2>QR Code</h2>
+  <img id="qrcode" src="" alt="QR Code do Pix" width="200" />
+
+  <script>
+    async function gerarPix() {
+      const value = document.getElementById('value').value;
+      const description = document.getElementById('description').value;
+      const code = document.getElementById('code').value;
+      const url = `https://pix-proxy.bccjur.workers.dev/?value=${value}&description=${description}&code=${code}`;
+
+      try {
+        const response = await fetch(url);
+        const data = await response.json();
+        const copiaecola = data?.data?.response?.qrCopyPaste || "---";
+        const imgUrl = data?.data?.response?.qrImageUrl || "";
+
+        document.getElementById('copiacola').innerText = copiaecola;
+        document.getElementById('qrcode').src = imgUrl;
+      } catch (e) {
+        document.getElementById('copiacola').innerText = "Erro ao gerar Pix.";
+      }
+    }
+
+    function copiar() {
+      const texto = document.getElementById("copiacola").innerText;
+      navigator.clipboard.writeText(texto).then(() => {
+        alert("Código Pix copiado!");
+      });
+    }
+  </script>
+</body>
+</html>
