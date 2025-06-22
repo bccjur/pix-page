@@ -1,63 +1,87 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pagamento via PIX</title>
   <style>
-    body { font-family: Arial; text-align:center; padding:20px; background:#f7f7f7;}
-    input,button { margin:10px; padding:10px; width:90%; max-width:300px;}
-    #pix-code { background:#eee; padding:10px; word-break:break-word; margin:10px auto;}
-    img { margin-top:20px; max-width:300px; }
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f7f7f7;
+      padding: 40px;
+    }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      max-width: 500px;
+      margin: auto;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    input, button {
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+      width: 90%;
+    }
+    #pix-code {
+      background: #eee;
+      padding: 10px;
+      margin-top: 10px;
+      word-break: break-word;
+    }
+    img {
+      margin-top: 20px;
+      max-width: 300px;
+    }
   </style>
 </head>
 <body>
-  <h1>Pagamento via PIX</h1>
-  <input id="description" placeholder="Descrição" value="teste">
-  <input id="code" placeholder="Chave Pix" value="U8LJWVPV6HHBDNFU">
-  <button id="generate">Gerar Pix (R$100)</button>
+  <div class="container">
+    <h1>Pagamento via PIX</h1>
+    <input id="description" placeholder="Descrição" value="teste" />
+    <input id="code" placeholder="Chave Pix" value="U8LJWVPV6HHBDNFU" />
+    <button id="generate">Gerar Pix (R$100)</button>
 
-  <div id="result">
     <h2>Código Copia e Cola</h2>
     <div id="pix-code">---</div>
     <button id="copy-btn">Copiar código</button>
+
     <h2>QR Code</h2>
-    <img id="qr-img" src="" alt="QR Code do Pix">
+    <img id="qr-img" src="" alt="QR Code do Pix" />
   </div>
 
   <script>
     document.getElementById('generate').addEventListener('click', async () => {
-      const desc = encodeURIComponent(document.getElementById('description').value);
+      const description = encodeURIComponent(document.getElementById('description').value);
       const code = encodeURIComponent(document.getElementById('code').value);
-      const url = `https://pix-proxy.bccjur.workers.dev/?value=100&description=${desc}&code=${code}`;
+      const apiUrl = `https://pix-proxy.bccjur.workers.dev/?value=100&description=${description}&code=${code}`;
 
       // Limpa visual antes de gerar
       document.getElementById('pix-code').innerText = 'Gerando...';
       document.getElementById('qr-img').src = '';
 
       try {
-        const res = await fetch(url);
+        const res = await fetch(apiUrl);
         if (!res.ok) throw 'Status ' + res.status;
         const json = await res.json();
-        const resp = json.data?.response || {};
-        const pix = resp.qrCopyPaste;
-        const imgUrl = resp.qrImageUrl;
 
-        if (typeof pix !== 'string' || pix.length < 10) {
-          throw 'Resposta inválida da API';
-        }
+        const pix = json.pix; // Pega o objeto dentro de 'pix'
+        const pixCode = pix?.qrCopyPaste || "Erro ao obter código Pix";
+        const qrUrl = pix?.qrImageUrl || "";
 
-        document.getElementById('pix-code').innerText = pix;
-        document.getElementById('qr-img').src = imgUrl || '';
-      } catch (e) {
-        console.error('Erro ao gerar Pix:', e);
+        document.getElementById('pix-code').innerText = pixCode;
+        document.getElementById('qr-img').src = qrUrl;
+      } catch (error) {
+        console.error('Erro:', error);
         document.getElementById('pix-code').innerText = 'Erro ao gerar';
       }
     });
 
     document.getElementById('copy-btn').addEventListener('click', () => {
       const text = document.getElementById('pix-code').innerText;
-      if (text && text.length > 10) {
+      if (text && text !== "---" && !text.startsWith("http")) {
         navigator.clipboard.writeText(text).then(() => {
           alert('Código Pix copiado!');
         });
